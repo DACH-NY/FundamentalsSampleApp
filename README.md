@@ -34,7 +34,7 @@ We recommend that you examine this app closely, paying attention to the code str
 
 ---
 
-# Project Proposal App
+# DamlForge App
 Daml templates designed for a platform for proposing project ideas to get rejected/approved.
 
 ### I. Overview 
@@ -67,21 +67,8 @@ navigator-options:
 For more info, check out [this post](https://discuss.daml.com/t/sandbox-options-wall-clock-time/5692/16?u=cathy_jung) on Daml Forum and [Daml Doc](https://docs.daml.com/tools/navigator/index.html?&_ga=2.48248804.337210607.1673989679-241632404.1672853064&_gac=1.17025355.1673455980.CjwKCAiA2fmdBhBpEiwA4CcHzfI2w1_D95zAr3_d6QTypOMXGTpUxtS06c55inucNwZvUZn4AebsJxoCZEgQAvD_BwE&_gl=1*elem6v*_ga*MjQxNjMyNDA0LjE2NzI4NTMwNjQ.*_ga_GVK9ZHZSMR*MTY3Mzk5NDQzOS4zMS4xLjE2NzM5OTQ3MDcuMC4wLjA.#logging-in-as-a-party).
 
 
-### IV. Building
-To compile the project
-```
-$ daml build
-```
-
-### V. Testing
-To test all scripts:
-Either run the pre-written script in the `Test.daml` under /daml OR run:
-```
-$ daml start
-```
-
-### VI. Running
-To load the project into the sandbox and start navigator:
+### IV. Compiling & Testing
+To compile and test, run the pre-written script in the `Test.daml` under /daml OR run:
 ```
 $ daml start
 ```

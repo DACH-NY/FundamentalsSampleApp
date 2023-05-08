@@ -1,29 +1,30 @@
 module Test where
+
 import Main
+-- import DA.Time
+import DA.Date
 import Daml.Script
 
-setup : Script ProjectId
-setup = do 
-    alice <- allocatePartyWithHint "Alice" (PartyIdHint "Alice")
-    bob <- allocatePartyWithHint "Bob" (PartyIdHint "Bob")
-    charlie <- allocatePartyWithHint "Charlie" (PartyIdHint "Charlie")
-
-    bobProjectIdea <- submit bob do
-        createCmd ProjectIdea with
-            employee = bob
-            colleague = charlie
-            manager = alice
-            project = "Daml Fundamentals Certification Capstone Rubric - Draft No. 1"
-            note = "Should include both backend AND frontend"
-
-    aliceRejects <- submit alice do 
-        exerciseCmd bobProjectIdea Reject with
-            feedback = "No way, teaching frontend at this point is too much"
+testGetNumDays : Script ()
+testGetNumDays = script do
+    cathy <- allocateParty "Cathy"
     
-    bobRevises <- submit bob do
-        exerciseCmd aliceRejects Revise with
-            newProject = "Daml Fundamentals Certification Capstone Rubric - Draft No.2"
-            newNote = "Agreed, let's focus on the Daml backend and Navigator"
+    let
+        myProject = ProjectInfo with
+            lead = cathy
+            title = "Daml Fundamentals Certification Exam"
+            details = "30 problems"
+            soloProject = True
+            participants = Left cathy
+            budgetRequirement = None
+            startDate = date 2023 Feb 15
+            endDate = date 2023 Mar 10
 
-    submit alice do
-        exerciseCmd bobRevises Accept
+        days : Int = getDuration myProject
+
+    debug myProject
+    debug $ myProject.startDate < myProject.endDate 
+    debug days
+
+    pure ()
+
