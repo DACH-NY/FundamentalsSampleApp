@@ -1,21 +1,22 @@
 module Test where
 
 import Main
--- import DA.Time
+
 import DA.Date
 import Daml.Script
 
 testGetNumDays : Script ()
 testGetNumDays = script do
-    cathy <- allocateParty "Cathy"
+    evaluator <- allocateParty "Evaluator"
+    alice <- allocateParty "Alice"
     
     let
         myProject = ProjectInfo with
-            lead = cathy
+            lead = alice
             title = "Daml Fundamentals Certification Exam"
             details = "30 problems"
             soloProject = True
-            participants = Left cathy
+            participants = Left alice
             budgetRequirement = None
             startDate = date 2023 Feb 15
             endDate = date 2023 Mar 10
@@ -25,6 +26,22 @@ testGetNumDays = script do
     debug myProject
     debug $ myProject.startDate < myProject.endDate 
     debug days
+
+    aliceProposal <- submit alice do
+        createCmd ProjectProposal with
+            proposer = alice
+            projectInfo = myProject
+            evaluator
+            note = "n/a"
+
+    accs <- query @Accomplishment alice
+    debug accs 
+
+    aliceAccs <- submit evaluator do
+        exerciseCmd aliceProposal ProposerAccomplishments with
+            accomplishments = accs
+
+    debug aliceAccs
 
     pure ()
 

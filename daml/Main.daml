@@ -1,6 +1,7 @@
 module Main where
 
 import DA.Time
+-- import DA.Foldable(forA)
 -- import DA.Date
 -- import DA.Either
 -- import Daml.Script
@@ -63,12 +64,22 @@ template ProjectProposal
             do
                 return self
 
-        -- manager can check the list of accomplishments of the proposer to see if this proposer is qualified/ready for this new project
-        -- use an iterative like mapA to print(debug) everything
-        -- nonconsuming choice ProposerAccomplishments: Optional([ContractId Accomplishment])
-        --     controller evaluator
-        --     do
+        -- evaluator can check the list of accomplishments of the proposer to see if this proposer is qualified/ready take on a new project
+        nonconsuming choice ProposerAccomplishments: ([Text])
+            with
+                accomplishments: [(ContractId Accomplishment, Accomplishment)]
+            controller evaluator
+            do
+                if null accomplishments then return ["N/A"]
+                else do
+                    -- 1. forA ver.
+                    forA accomplishments (\acc -> do
+                        let 
+                            accDetails = acc._2.project.projectInfo.title <> " : " <> acc._2.project.projectInfo.details
+                        return accDetails)
 
+                    -- 2. map ver.
+                    -- return $ map (\acc -> acc._2.project.projectInfo.title <> " : " <> acc._2.project.projectInfo.details) accomplishments
 
         -- evaluator can Reject the proposer with feedback
         choice Reject: ProjectProposalId
@@ -79,8 +90,8 @@ template ProjectProposal
                 create this with
                     note = feedback
 
-        -- an example of preconsuming choice; can be a regular choice without archiving
-        -- upon getting rejected, the original proposer can revise the ProjectInfo and re-propose
+        -- an example of preconsuming choice; can be a regular choice without the archive function
+        -- upon getting rejected, the original proposer can Revise the ProjectInfo to re-propose
         nonconsuming choice Revise: ProjectProposalId
             with
                 newProjectInfo: ProjectInfo
@@ -98,7 +109,7 @@ template ProjectProposal
             do
                 return ()
 
-        -- evaluator can approve the ProjectProposal & create an official Project contract
+        -- evaluator can approve the ProjectProposal & create a Project contract
         choice Approve: ProjectId
             with
                 evaluationDate: Date -- when will the project get evaluated
@@ -107,7 +118,7 @@ template ProjectProposal
             do
                 assertMsg "Project should be evaluated after the deadline." (evaluationDate > projectInfo.endDate)
                 create Project with
-                    project = projectInfo
+                    projectInfo
                     duration = getDuration projectInfo
                     evaluator
                     evaluationDate
@@ -116,47 +127,50 @@ template ProjectProposal
 
 template Project
     with
-        project: ProjectInfo
+        projectInfo: ProjectInfo
         duration: Int
         evaluator: Party
         evaluationDate: Date
         evaluatorNote: Optional(Text)
     where
-        signatory evaluator, project.lead 
+        signatory evaluator, projectInfo.lead 
 
-        ensure evaluationDate > project.endDate
+        key (projectInfo.lead, projectInfo):(Party, ProjectInfo)
+        maintainer key._1
 
-        choice Evaluate: ()
+        ensure evaluationDate > projectInfo.endDate
+
+        choice Evaluate: Either (ContractId Project) (ContractId Accomplishment)
             with
                 todaysDate: Date
                 feedback: Optional(Text)
                 readyToPublish: Bool
             controller evaluator
             do
-                -- if ver:
+                -- 1. if ver:
                 if readyToPublish then do
-                    create Accomplishment with
+                    newAcc <- create Accomplishment with
                         project = this
                         evaluator
-                    return ()
+                    return (Right newAcc)
                 else do
-                    create this with 
+                    currProj <- create this with 
                         evaluationDate = todaysDate
                         evaluatorNote = feedback
-                    return ()
+                    return (Left currProj)
 
-                -- case ver:             
+                -- 2. case ver:             
                 -- case readyToPublish of
                 --     False -> do
-                --         create this with
+                --         currProj <- create this with
                 --             evaluationDate = todaysDate
                 --             evaluatorNote = feedback
-                --         return ()
+                --         return (Left currProj)
                 --     True -> do
-                --         create Accomplishment with
-                --             project
+                --         newAcc <- create Accomplishment with
+                --             project = this
                 --             evaluator
-                --         return ()
+                --         return (Right newAcc)
 
         choice ChangeDates: ProjectId
             with
@@ -164,28 +178,27 @@ template Project
                 newEndDate: Date
                 newEvalDate: Date
                 comment: Optional(Text)
-            controller evaluator, project.lead
+            controller evaluator, projectInfo.lead
             do
                 let
-                    newProject = ProjectInfo with
-                        lead = project.lead
-                        title = project.title
-                        details = project.details
-                        soloProject = project.soloProject
-                        participants = project.participants
-                        budgetRequirement = project.budgetRequirement
+                    newProjectInfo = ProjectInfo with
+                        lead = projectInfo.lead
+                        title = projectInfo.title
+                        details = projectInfo.details
+                        soloProject = projectInfo.soloProject
+                        participants = projectInfo.participants
+                        budgetRequirement = projectInfo.budgetRequirement
                         startDate = newStartDate
                         endDate = newEndDate
 
                 create this with
-                    project = newProject
-                    duration = getDuration newProject
+                    projectInfo = newProjectInfo
+                    duration = getDuration newProjectInfo
                     evaluationDate = newEvalDate
                     evaluatorNote = comment
 
-
-        choice Cancle: ()
-            controller evaluator, project.lead
+        choice CancleProject: ()
+            controller evaluator, projectInfo.lead
             do
                 return ()
 
@@ -195,7 +208,9 @@ template Accomplishment
         project: Project
         evaluator: Party
     where
+        -- 1. Ensure that the signatories of a Project contract is equal to that of Accomplishment contract
+        -- 2. Prevent Accomplishment contract from being created outside the Evaluate choice
         signatory (signatory project)
 
-        key (project.project.lead, project.project) : (Party, ProjectInfo)
+        key (project.projectInfo.lead, project.projectInfo) : (Party, ProjectInfo)
         maintainer key._1
