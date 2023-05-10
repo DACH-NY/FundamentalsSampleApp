@@ -1,7 +1,7 @@
 sdk-version: 2.5.0
-name: ProjectProposalApp
+name: DamlForgeApp
 source: daml
-init-script: Test:setup
+init-script: Setup:setupUsers
 version: 0.0.1
 dependencies:
   - daml-prim

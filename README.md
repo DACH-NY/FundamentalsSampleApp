@@ -6,24 +6,10 @@ As part of the certification process, you will be required to complete a backend
 
 **The project must include the following components that are fully operational:**
 
-+ A signatory with the authority to create and archive contracts
-+ A controller with the authority to exercise choices on contracts
-+ An observer with the authority to view contracts
-+ Test scripts that verify the functionalities of the above mentioned parties
-
-**Bonus points will be awarded if you implement the following features:**
-
-+ Use the propose / accept design pattern
-+ Use the try / catch block for error handling
-
-**We will score all required and bonus features (6 in total) by the following:**
-
-+ The feature is free of bugs
-+ Only authorized users have access to the feature
-+ The feature can be tested appropriately
-+ TX is not unexpectedly aborted 
+![rubric](./rubric.png)
 
 🚨 **IMPORTANT NOTE** 🚨
++ **If the `daml start` command results in errors or prevents compilation, the capstone project will auto-fail and will not be evaluated.**
 + **The evaluation of your project requires a README that adheres to the format provided in the README of the sample project below.**
 
 + Your README should document the purpose and functionalities of the project, as well as any important details about how it works. The README file should also include instructions on how to run the project, how to run the tests, and any dependencies required to do so. This documentation will help others understand your project and how to use it, and will also demonstrate your ability to clearly communicate about your work.
@@ -34,19 +20,22 @@ We recommend that you examine this app closely, paying attention to the code str
 
 ---
 
-# DamlForge App
-Daml templates designed for a platform for proposing project ideas to get rejected/approved.
+# 🛠️ DamlForge 🛠️ 
+DamlForge is a project management application built in Daml.
 
 ### I. Overview 
-This project was created by using the `empty-skeleton` template. The project adopts and exemplifies the `proposal-accept` design pattern. A signatory can create a ProjectIdea contract. Then they can exercise the Propose choice as a controller to get the project proposal either approved or rejected by their manager. If the manager, a controller, exercises Reject choice on the proposed contract, the employee can exercise Revise choice on it to re-propose the project with updated details. Upon manager exercising the Accept choice, a Project contract is created.
+This project was created by using the `empty-skeleton` template. The project adopts and exemplifies the `proposal-accept` design pattern. 
+
+Proposer can create a ProjectProposal contract. Evaluator can exercise ProposerAccomplishments to confirm if the proposer is ready to take on the new project. Evaluator can either Reject or Approve the proposal. Upon getting rejected, proposer can exercise Revise to re-propose the project with updated details. Upon getting approved, a Project contract is created, which then evaluator can Evaluate to create an Accomplishmen contract with, if the Project contract is considered ready to be published.
+
 
 ### II. Workflow
-1. An employee creates a ProjectIdea contract. Both colleague and manager are invited as obeservers, but manager, as a controller, is authorized to exercise either Reject or Accept choices.
-2. Upon the controller exercising Reject, a new contract is created.
-3. Revise choice can be exercised on the newly generated contract from above.
-4. Accept choice is exercised to finalize the project idea and generate a new Project contract.
-
-[![Demo](./Demo.png)](https://share.vidyard.com/watch/xbDuZMbNUbgfHmPnqzt72N?)
+  1. proposer creates a ProjectProposal contract     
+  2. evaluator exercises ProposerAccomplishments to check proposer's past accomplishments and confrim if proposer is ready to take on a new responsibility
+  3. evaluator exercises Reject with a feedback: "Aim to finish it by the end of March"
+  4. proposer exercises Revise with an updated endDate (March 25, 2023)
+  5. evaluator exercises Approve - a Project contract is created
+  6. evaluator exercises Evaluate and decides that it's ready to be published - an Accomplishment contract is created
 
 ### III. Challenge(s)
 * `controller ... can` syntax causes warning in Daml 2.0+. The code itself does not cause any issues/errors in 2.5.0 but according to the warning, the syntax will be deprecated in the future versions of Daml. More information [here](https://docs.daml.com/daml/reference/choices.html#daml-ref-controller-can-deprecation).
